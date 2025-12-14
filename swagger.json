@@ -1,0 +1,334 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Inventory API",
+    "version": "1.0.0",
+    "description": "API сервісу інвентаризації для лабораторної роботи"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Унікальний ID товару",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Назва товару",
+            "example": "Laptop"
+          },
+          "description": {
+            "type": "string",
+            "description": "Опис товару",
+            "example": "Work laptop"
+          },
+          "photo": {
+            "type": "string",
+            "description": "Посилання на фото API",
+            "example": "/inventory/1/photo"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Ім'я файлу на диску",
+            "example": "image123.jpg"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/inventory": {
+      "get": {
+        "summary": "Отримати список всіх речей",
+        "tags": ["Inventory"],
+        "responses": {
+          "200": {
+            "description": "Список успішно отримано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inventory/{id}": {
+      "get": {
+        "summary": "Отримати інформацію про річ за ID",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "ID товару"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Інформація про товар",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Товар не знайдено"
+          }
+        }
+      },
+      "put": {
+        "summary": "Оновити назву або опис речі (JSON)",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "New Name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "New Description"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Товар не знайдено"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Видалити річ",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішно видалено (повертає новий список)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Товар не знайдено"
+          }
+        }
+      }
+    },
+    "/inventory/{id}/photo": {
+      "get": {
+        "summary": "Отримати файл фотографії",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Зображення",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Фото або товар не знайдено"
+          }
+        }
+      },
+      "put": {
+        "summary": "Оновити фотографію товару",
+        "tags": ["Inventory"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Фото успішно оновлено"
+          },
+          "400": {
+            "description": "Файл не завантажено"
+          },
+          "404": {
+            "description": "Товар не знайдено"
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "summary": "Реєстрація нового пристрою (Multipart)",
+        "tags": ["Inventory"],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inventory_name": {
+                    "type": "string",
+                    "description": "Обов'язкове поле"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": ["inventory_name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Товар створено"
+          },
+          "400": {
+            "description": "Не вказано ім'я"
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "summary": "Пошук пристрою за ID",
+        "tags": ["Search"],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID товару"
+                  },
+                  "includePhoto": {
+                    "type": "string",
+                    "enum": ["on", "off"],
+                    "description": "Передати 'on' для посилання на фото"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Результат пошуку",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Товар не знайдено"
+          }
+        }
+      }
+    }
+  }
+}
