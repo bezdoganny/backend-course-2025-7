@@ -1,0 +1,40 @@
+services:
+
+  server:
+    image: lab7
+    build:
+      context: .
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: /usr/src/app/node_modules/.bin/nodemon --inspect=0.0.0.0:9229 main.js -- -h 0.0.0.0 -p 8000 --cache ./dir
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "${PORT}:8000"
+      - "9229:9229"
+
+  db:
+    image: mysql:8.0
+    restart: always
+
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+
+volumes:
+  db-data:
