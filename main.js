@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { program } = require('commander'); 
 const superagent = require('superagent'); 
 const fs = require('fs');
@@ -8,12 +10,44 @@ const multer = require('multer');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 
+const mysql = require('mysql');
+
+const dbConfig = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+};
+
+let connection;
+
+function handleDisconnect() {
+    connection = mysql.createConnection(dbConfig);
+
+    connection.connect(function(err) {
+        if (err) {
+            console.log('Помилка підключення до БД:', err.code);
+            console.log('Спроба перепідключення через 2 секунди...');
+            setTimeout(handleDisconnect, 2000);
+        } else {
+            console.log('Успішно підключено до бази даних!');
+        }
+    });
+
+    connection.on('error', function(err) {
+        console.log('Помилка БД:', err);
+            throw err;
+    });
+}
+
+handleDisconnect();
+
 program.requiredOption('-h, --host <ip>','ip-adresa').requiredOption('-p, --port <port>','port').requiredOption('-c, --cache <directions>','direction to file');
 
 program.parse();
 
 const options = program.opts();
-const HOST = options.host, PORT = options.port, DIR = path.resolve(options.cache),FILE = path.join(DIR,'data.json'),PHOTOFILE=path.join(DIR,'uploads/');
+const HOST = process.env.HOST ?? options.host, PORT = process.env.PORT ?? options.port, DIR = path.resolve(options.cache),FILE = path.join(DIR,'data.json'),PHOTOFILE=path.join(DIR,'uploads/');
 
 let id = (() => {
     if (fs.existsSync(FILE)) {
@@ -86,7 +120,6 @@ app.get('/RegisterForm.html', (req,res) => {
 app.get('/SearchForm.html', (req,res) => {
     res.sendFile(path.resolve(__dirname,'SearchForm.html'))
 })
-
 
 app.post('/register',upload.single('photo'), (req,res) =>{
 
